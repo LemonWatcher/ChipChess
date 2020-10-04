@@ -93,9 +93,26 @@
 
 :const UNMOVED   0b10000000 # Bit 8 for unmoved flag for castling 
 
-:const OFF_BOARD 0b11111111 # Used for off-board squares in move checking
+# Board representation
+
+:const OFF_BOARD 0b11111111 # Used as a sentinel for off-board squares in move checking
+
+# Offset table for the 8x8 board inside the 10x12 board with sentinal squares around it
+: mailbox
+	21 22 23 24 25 26 27 28
+	31 32 33 34 35 36 37 38
+	41 42 43 44 45 46 47 48
+	51 52 53 54 55 56 57 58
+	61 62 63 64 65 66 67 68
+	71 72 73 74 75 76 77 78
+	81 82 83 84 85 86 87 88
+	91 92 93 94 95 96 97 98
 
 : position
+	:byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD }
+	:byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD }
+
+	:byte { OFF_BOARD }
 	:byte { BLACK | UNMOVED | ROOK }
 	:byte { BLACK | UNMOVED | KNIGHT }
 	:byte { BLACK | UNMOVED | BISHOP }
@@ -104,7 +121,9 @@
 	:byte { BLACK | UNMOVED | BISHOP }
 	:byte { BLACK | UNMOVED | KNIGHT }
 	:byte { BLACK | UNMOVED | ROOK }
+	:byte { OFF_BOARD }
 	
+	:byte { OFF_BOARD }
 	:byte { BLACK | UNMOVED | DOWN | PAWN }
 	:byte { BLACK | UNMOVED | DOWN | PAWN }
 	:byte { BLACK | UNMOVED | DOWN | PAWN }
@@ -113,12 +132,14 @@
 	:byte { BLACK | UNMOVED | DOWN | PAWN }
 	:byte { BLACK | UNMOVED | DOWN | PAWN }
 	:byte { BLACK | UNMOVED | DOWN | PAWN }
+	:byte { OFF_BOARD }
 	
-	:byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY }
-	:byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY }
-	:byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY }
-	:byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY }
+	:byte { OFF_BOARD } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { OFF_BOARD }
+	:byte { OFF_BOARD } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { OFF_BOARD }
+	:byte { OFF_BOARD } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { OFF_BOARD }
+	:byte { OFF_BOARD } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { OFF_BOARD }
 	
+	:byte { OFF_BOARD }
 	:byte { WHITE | UNMOVED | UP | PAWN }
 	:byte { WHITE | UNMOVED | UP | PAWN }
 	:byte { WHITE | UNMOVED | UP | PAWN }
@@ -127,7 +148,9 @@
 	:byte { WHITE | UNMOVED | UP | PAWN }
 	:byte { WHITE | UNMOVED | UP | PAWN }
 	:byte { WHITE | UNMOVED | UP | PAWN }
+	:byte { OFF_BOARD }
 	
+	:byte { OFF_BOARD }
 	:byte { WHITE | UNMOVED | ROOK }
 	:byte { WHITE | UNMOVED | KNIGHT }
 	:byte { WHITE | UNMOVED | BISHOP }
@@ -136,6 +159,10 @@
 	:byte { WHITE | UNMOVED | BISHOP }
 	:byte { WHITE | UNMOVED | KNIGHT }
 	:byte { WHITE | UNMOVED | ROOK }
+	:byte { OFF_BOARD }
+	
+	:byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD }
+	:byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD }
 
 :alias rank ve # IN
 :alias file vd # IN
@@ -187,9 +214,14 @@
 			offset <<= offset
 			offset <<= offset
 			offset += file
-			i := position
+			i := mailbox
 			i += offset
 			load square
+			
+			i := position
+			i += square
+			load square
+			
 			draw-square # rank file square
 			
 			file += 1
