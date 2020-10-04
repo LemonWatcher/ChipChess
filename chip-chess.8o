@@ -2,103 +2,158 @@
 
 : empty 0 0 0 0
 
-: pawn
+: white-pawn
 	0b00000000
 	0b00011000
 	0b00010000
 	0b00000000
 	
-: knight
+: white-knight
 	0b00000000
 	0b00011100
 	0b00111000
 	0b00000000
 	
-: bishop
+: white-bishop
 	0b00000000
 	0b00110100
 	0b00111100
 	0b00000000
 	
-: rook
+: white-rook
 	0b00000000
 	0b00100100
 	0b00111100
 	0b00000000
 
-: queen
+: white-queen
 	0b00000000
 	0b00011000
 	0b01111110
 	0b00000000
 	
-: king
+: white-king
 	0b00000000
 	0b01011010
 	0b01111110
 	0b00000000
-
-: black-piece 0 0 0 0
 	
-:const WHITE 0
-:const BLACK 1
-:const EMPTY 0
-:const PAWN 1
-:const KNIGHT 2
-:const BISHOP 3
-:const ROOK 4
-:const QUEEN 5
-:const KING 6
-	
-:macro squares COLOUR_A PIECE_A COLOUR_B PIECE_B {
-	:byte { ( ( ( PIECE_A << 1  ) | COLOUR_A ) << 4 ) | ( ( PIECE_B << 1 ) | COLOUR_B ) }
-}
+: skip 0 0 0 0 0 0 0 0 # Waste 8 bytes so we can use lower 4 bits as offset
 
-:macro row COLOUR_A PIECE_A
-           COLOUR_B PIECE_B 
-           COLOUR_C PIECE_C
-           COLOUR_D PIECE_D 
-           COLOUR_E PIECE_E 
-           COLOUR_F PIECE_F 
-           COLOUR_G PIECE_G 
-           COLOUR_H PIECE_H {
-	squares COLOUR_A PIECE_A COLOUR_B PIECE_B
-	squares COLOUR_C PIECE_C COLOUR_D PIECE_D
-	squares COLOUR_E PIECE_E COLOUR_F PIECE_F
-	squares COLOUR_G PIECE_G COLOUR_H PIECE_H
-}
+: black-pawn
+	0b11111111
+	0b11100111
+	0b11101111
+	0b11111111
 
-:macro row-8 COLOUR PIECE { row COLOUR PIECE COLOUR PIECE COLOUR PIECE COLOUR PIECE COLOUR PIECE COLOUR PIECE COLOUR PIECE COLOUR PIECE  }
+: black-knight
+	0b11111111
+	0b11100011
+	0b11000111
+	0b11111111
+
+: black-bishop
+	0b11111111
+	0b11001011
+	0b11000011
+	0b11111111
+
+: black-rook
+	0b11111111
+	0b11011011
+	0b11000011
+	0b11111111
+
+: black-queen
+	0b11111111
+	0b11100111
+	0b10000001
+	0b11111111
+
+: black-king
+	0b11111111
+	0b10100101
+	0b10000001
+	0b11111111
+
+# Piece representation
+:const EMPTY     0          # Blank square
+:const PAWN      0b00000001 # Low 3 bits have piece info
+:const KNIGHT    0b00000010
+:const BISHOP    0b00000011
+:const ROOK      0b00000100
+:const QUEEN     0b00000101
+:const KING      0b00000110 # Note the 2 byte gap here which affects sprite offsets
+
+:const BLACK     0b00001000 # Bits 4/5 for colours
+:const WHITE     0b00010000
+
+:const UP        0b00100000 # Bits 6/7 for direction of pawns
+:const DOWN      0b01000000
+
+:const UNMOVED   0b10000000 # Bit 8 for unmoved flag for castling 
+
+:const OFF_BOARD 0b11111111 # Used for off-board squares in move checking
 
 : position
-	row BLACK ROOK WHITE EMPTY BLACK BISHOP BLACK QUEEN BLACK KING BLACK BISHOP BLACK KNIGHT BLACK ROOK
-	row BLACK PAWN BLACK PAWN WHITE EMPTY BLACK PAWN BLACK PAWN BLACK PAWN BLACK PAWN BLACK PAWN
-	row WHITE EMPTY WHITE EMPTY BLACK KNIGHT WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY
-	row WHITE EMPTY WHITE EMPTY BLACK PAWN WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY
-	row WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE PAWN WHITE EMPTY WHITE EMPTY WHITE EMPTY
-	row WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE KNIGHT WHITE EMPTY WHITE EMPTY
-	row WHITE PAWN WHITE PAWN WHITE PAWN WHITE PAWN WHITE EMPTY WHITE PAWN WHITE PAWN WHITE PAWN
-	row WHITE ROOK WHITE KNIGHT WHITE BISHOP WHITE QUEEN WHITE KING WHITE BISHOP WHITE EMPTY WHITE ROOK
+	:byte { BLACK | UNMOVED | ROOK }
+	:byte { BLACK | UNMOVED | KNIGHT }
+	:byte { BLACK | UNMOVED | BISHOP }
+	:byte { BLACK | UNMOVED | QUEEN }
+	:byte { BLACK | UNMOVED | KING }
+	:byte { BLACK | UNMOVED | BISHOP }
+	:byte { BLACK | UNMOVED | KNIGHT }
+	:byte { BLACK | UNMOVED | ROOK }
+	
+	:byte { BLACK | UNMOVED | DOWN | PAWN }
+	:byte { BLACK | UNMOVED | DOWN | PAWN }
+	:byte { BLACK | UNMOVED | DOWN | PAWN }
+	:byte { BLACK | UNMOVED | DOWN | PAWN }
+	:byte { BLACK | UNMOVED | DOWN | PAWN }
+	:byte { BLACK | UNMOVED | DOWN | PAWN }
+	:byte { BLACK | UNMOVED | DOWN | PAWN }
+	:byte { BLACK | UNMOVED | DOWN | PAWN }
+	
+	:byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY }
+	:byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY }
+	:byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY }
+	:byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY } :byte { EMPTY }
+	
+	:byte { WHITE | UNMOVED | UP | PAWN }
+	:byte { WHITE | UNMOVED | UP | PAWN }
+	:byte { WHITE | UNMOVED | UP | PAWN }
+	:byte { WHITE | UNMOVED | UP | PAWN }
+	:byte { WHITE | UNMOVED | UP | PAWN }
+	:byte { WHITE | UNMOVED | UP | PAWN }
+	:byte { WHITE | UNMOVED | UP | PAWN }
+	:byte { WHITE | UNMOVED | UP | PAWN }
+	
+	:byte { WHITE | UNMOVED | ROOK }
+	:byte { WHITE | UNMOVED | KNIGHT }
+	:byte { WHITE | UNMOVED | BISHOP }
+	:byte { WHITE | UNMOVED | QUEEN }
+	:byte { WHITE | UNMOVED | KING }
+	:byte { WHITE | UNMOVED | BISHOP }
+	:byte { WHITE | UNMOVED | KNIGHT }
+	:byte { WHITE | UNMOVED | ROOK }
 
 :alias rank ve # IN
 :alias file vd # IN
-:alias square vc # IN
-:alias tmp vb
-:alias colour va
-:alias piece v9
-:alias x v8
-:alias y v7
+:alias square v0 # IN
+:alias mask vc
+:alias piece vb
+:alias x va
+:alias y v9
+# CLOBBERS square, mask, x, y, i
 
 : draw-square
-	tmp := 1
-	colour := square
-	colour &= tmp
-	
-	piece >>= square
-	piece <<= piece
-	piece <<= piece
+	mask := 0b1111
+	square &= mask
+	square <<= square
+	square <<= square
+
 	i := pieces
-	i += piece
+	i += square
 
 	x <<= file
 	x <<= x
@@ -107,31 +162,18 @@
 	y <<= rank
 	y <<= y
 	
-	if colour == BLACK begin
-		load v3
-		tmp := 0b11111111
-		v0 ^= tmp
-		v1 ^= tmp
-		v2 ^= tmp
-		v3 ^= tmp
-		i := black-piece
-		save v3
-		i := black-piece
-	end
-	
 	sprite x y 4
 ;
 
 #:alias rank ve
 #:alias file vd
-#:alias square vc
-#:alias tmp vb
-#:alias colour va
-#:alias piece v9
-#:alias x v8
-#:alias y v7
-:alias offset v6
-:alias packed-squares v5
+#:alias square v0
+#:alias mask vc
+#:alias piece vb
+#:alias x va
+#:alias y v9
+:alias offset v8
+# CLOBBERS rank, file, offset, square, i
 
 : draw-board
 	rank := 0
@@ -143,25 +185,11 @@
 			
 			offset <<= rank
 			offset <<= offset
-			tmp >>= file
-			offset += tmp
+			offset <<= offset
+			offset += file
 			i := position
 			i += offset
-			
-			load v0
-			packed-squares := v0
-			square >>= packed-squares
-			square >>= square
-			square >>= square
-			square >>= square
-			
-			draw-square # rank file square
-			
-			square := packed-squares
-			tmp := 0b00001111
-			square &= tmp
-			file += 1
-			
+			load square
 			draw-square # rank file square
 			
 			file += 1
