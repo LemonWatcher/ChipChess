@@ -1,0 +1,174 @@
+: pieces
+
+: empty 0 0 0 0
+
+: pawn
+	0b00000000
+	0b00011000
+	0b00010000
+	0b00000000
+	
+: knight
+	0b00000000
+	0b00011100
+	0b00111000
+	0b00000000
+	
+: bishop
+	0b00000000
+	0b00110100
+	0b00111100
+	0b00000000
+	
+: rook
+	0b00000000
+	0b00100100
+	0b00111100
+	0b00000000
+
+: queen
+	0b00000000
+	0b00011000
+	0b01111110
+	0b00000000
+	
+: king
+	0b00000000
+	0b01011010
+	0b01111110
+	0b00000000
+
+: black-piece 0 0 0 0
+	
+:const WHITE 0
+:const BLACK 1
+:const EMPTY 0
+:const PAWN 1
+:const KNIGHT 2
+:const BISHOP 3
+:const ROOK 4
+:const QUEEN 5
+:const KING 6
+	
+:macro squares COLOUR_A PIECE_A COLOUR_B PIECE_B {
+	:byte { ( ( ( PIECE_A << 1  ) | COLOUR_A ) << 4 ) | ( ( PIECE_B << 1 ) | COLOUR_B ) }
+}
+
+:macro row COLOUR_A PIECE_A
+           COLOUR_B PIECE_B 
+           COLOUR_C PIECE_C
+           COLOUR_D PIECE_D 
+           COLOUR_E PIECE_E 
+           COLOUR_F PIECE_F 
+           COLOUR_G PIECE_G 
+           COLOUR_H PIECE_H {
+	squares COLOUR_A PIECE_A COLOUR_B PIECE_B
+	squares COLOUR_C PIECE_C COLOUR_D PIECE_D
+	squares COLOUR_E PIECE_E COLOUR_F PIECE_F
+	squares COLOUR_G PIECE_G COLOUR_H PIECE_H
+}
+
+:macro row-8 COLOUR PIECE { row COLOUR PIECE COLOUR PIECE COLOUR PIECE COLOUR PIECE COLOUR PIECE COLOUR PIECE COLOUR PIECE COLOUR PIECE  }
+
+: position
+	row BLACK ROOK WHITE EMPTY BLACK BISHOP BLACK QUEEN BLACK KING BLACK BISHOP BLACK KNIGHT BLACK ROOK
+	row BLACK PAWN BLACK PAWN WHITE EMPTY BLACK PAWN BLACK PAWN BLACK PAWN BLACK PAWN BLACK PAWN
+	row WHITE EMPTY WHITE EMPTY BLACK KNIGHT WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY
+	row WHITE EMPTY WHITE EMPTY BLACK PAWN WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY
+	row WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE PAWN WHITE EMPTY WHITE EMPTY WHITE EMPTY
+	row WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE EMPTY WHITE KNIGHT WHITE EMPTY WHITE EMPTY
+	row WHITE PAWN WHITE PAWN WHITE PAWN WHITE PAWN WHITE EMPTY WHITE PAWN WHITE PAWN WHITE PAWN
+	row WHITE ROOK WHITE KNIGHT WHITE BISHOP WHITE QUEEN WHITE KING WHITE BISHOP WHITE EMPTY WHITE ROOK
+
+:alias rank ve # IN
+:alias file vd # IN
+:alias square vc # IN
+:alias tmp vb
+:alias colour va
+:alias piece v9
+:alias x v8
+:alias y v7
+
+: draw-square
+	tmp := 1
+	colour := square
+	colour &= tmp
+	
+	piece >>= square
+	piece <<= piece
+	piece <<= piece
+	i := pieces
+	i += piece
+
+	x <<= file
+	x <<= x
+	x <<= x
+	
+	y <<= rank
+	y <<= y
+	
+	if colour == BLACK begin
+		load v3
+		tmp := 0b11111111
+		v0 ^= tmp
+		v1 ^= tmp
+		v2 ^= tmp
+		v3 ^= tmp
+		i := black-piece
+		save v3
+		i := black-piece
+	end
+	
+	sprite x y 4
+;
+
+#:alias rank ve
+#:alias file vd
+#:alias square vc
+#:alias tmp vb
+#:alias colour va
+#:alias piece v9
+#:alias x v8
+#:alias y v7
+:alias offset v6
+:alias packed-squares v5
+
+: draw-board
+	rank := 0
+	loop
+		while rank != 8
+		file := 0
+		loop
+			while file != 8
+			
+			offset <<= rank
+			offset <<= offset
+			tmp >>= file
+			offset += tmp
+			i := position
+			i += offset
+			
+			load v0
+			packed-squares := v0
+			square >>= packed-squares
+			square >>= square
+			square >>= square
+			square >>= square
+			
+			draw-square # rank file square
+			
+			square := packed-squares
+			tmp := 0b00001111
+			square &= tmp
+			file += 1
+			
+			draw-square # rank file square
+			
+			file += 1
+		again
+		rank += 1
+	again
+;
+
+: main
+	draw-board
