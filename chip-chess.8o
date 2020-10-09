@@ -167,39 +167,42 @@
 	:byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD }
 	:byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD } :byte { OFF_BOARD }
 
+:macro get-coords tmp offset x y {
+	tmp := 0b111
+	x := offset
+	x &= tmp
+	x <<= x
+	x <<= x
+	x <<= x
 
-:alias offset ve # IN
+	tmp := 0b11111000
+	y := offset
+	y &= tmp
+	y >>= y
+}
+
+:alias tmp ve
+:alias offset vd # IN
 :alias square v0 # IN
-:alias mask vd
 :alias x vc
 :alias y vb
-# CLOBBERS square, mask, x, y, i
+# CLOBBERS square, tmp, x, y, i
 
 : draw-square
-	mask := 0b1111
-	square &= mask
+	tmp := 0b1111
+	square &= tmp
 	square <<= square
 	square <<= square
 
 	i := pieces
 	i += square
 	
-	mask := 0b111
-	x := offset
-	x &= mask
-	x <<= x
-	x <<= x
-	x <<= x
-
-	mask := 0b11111000
-	y := offset
-	y &= mask
-	y >>= y
+	get-coords tmp offset x y
 	
 	sprite x y 4
 ;
 
-#:alias offset ve
+#:alias offset vd
 #:alias square v0
 # CLOBBERS offset, square, i
 
@@ -222,5 +225,90 @@
 	again
 ;
 
+#:alias tmp ve
+#:alias offset vd # IN
+:alias selected-offset va # IN
+#:alias x vc
+#:alias y vb
+
+: draw-selection
+	if selected-offset == offset then return
+	if selected-offset == OFF_BOARD then return
+	
+	get-coords tmp selected-offset x y
+	
+	i := cursor
+	
+	sprite x y 4
+;
+
+#:alias tmp ve
+#:alias offset vd # IN
+#:alias selected-offset va # IN
+#:alias x vc
+#:alias y vb
+:alias highlighted v9
+
+: draw-cursor
+	get-coords tmp offset x y
+	
+	i := cursor
+	
+	sprite x y 4
+	draw-selection
+	
+	tmp := 1
+	highlighted ^= tmp
+;
+
+: move-cursor
+	tmp := OCTO_KEY_D
+	if tmp key begin
+		if highlighted == 1 then draw-cursor
+		offset += 1
+	end
+	tmp := OCTO_KEY_A
+	if tmp key begin
+		if highlighted == 1 then draw-cursor
+		offset -= 1
+	end
+	tmp := OCTO_KEY_W
+	if tmp key begin
+		if highlighted == 1 then draw-cursor
+		offset -= 8
+	end
+	tmp := OCTO_KEY_S
+	if tmp key begin
+		if highlighted == 1 then draw-cursor
+		offset += 8
+	end
+	tmp := OCTO_KEY_E
+	if tmp key begin
+		if highlighted == 1 then draw-selection
+		selected-offset := offset
+	end
+	tmp := 0b111111
+	offset &= tmp
+;
+
+:const SYNC_RESOLUTION 10
+
+: sync
+	loop
+		vf := delay
+		if vf != 0 then
+	again
+
+	vf := 10
+	delay := vf
+;
+
 : main
 	draw-board
+	offset := 52
+	selected-offset := OFF_BOARD
+	loop
+		draw-cursor
+		move-cursor
+		sync
+	again
